@@ -62,6 +62,13 @@ namespace boost { namespace hana {
         }
     };
 
+    // this obvious should be placed somewhere else...
+    // copied from https://en.cppreference.com/w/cpp/utility/functional/unwrap_reference.html
+    template<class T>
+    struct unwrap_reference { using type = T; };
+    template<class U>
+    struct unwrap_reference<std::reference_wrapper<U>> { using type = U&; };
+
     template <std::size_t ...n, typename F, typename ...X>
     struct partial_t<std::index_sequence<n...>, F, X...> {
         partial_t() = default;
@@ -75,24 +82,24 @@ namespace boost { namespace hana {
 
         template <typename ...Y>
         constexpr decltype(auto) operator()(Y&& ...y) const& {
-            return hana::at_c<0>(storage_)(
-                hana::at_c<n+1>(storage_)...,
+            return static_cast<const typename unwrap_reference<F>::type &>(hana::at_c<0>(storage_))(
+                static_cast<const typename unwrap_reference<X>::type &>(hana::at_c<n+1>(storage_))...,
                 static_cast<Y&&>(y)...
             );
         }
 
         template <typename ...Y>
         constexpr decltype(auto) operator()(Y&& ...y) & {
-            return hana::at_c<0>(storage_)(
-                hana::at_c<n+1>(storage_)...,
+            return static_cast<typename unwrap_reference<F>::type &>(hana::at_c<0>(storage_))(
+                static_cast<typename unwrap_reference<X>::type &>(hana::at_c<n+1>(storage_))...,
                 static_cast<Y&&>(y)...
             );
         }
 
         template <typename ...Y>
         constexpr decltype(auto) operator()(Y&& ...y) && {
-            return static_cast<F&&>(hana::at_c<0>(storage_))(
-                static_cast<X&&>(hana::at_c<n+1>(storage_))...,
+            return static_cast<typename unwrap_reference<F>::type &&>(hana::at_c<0>(storage_))(
+                static_cast<typename unwrap_reference<X>::type &&>(hana::at_c<n+1>(storage_))...,
                 static_cast<Y&&>(y)...
             );
         }
