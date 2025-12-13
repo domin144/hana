@@ -101,5 +101,6 @@ int main() {
     // Check if non-copyable objects can be compared
     auto map_unique_1 = hana::make_map(hana::make_pair(hana::integral_constant<int, 0>{}, std::make_unique<int>(0)));
     auto map_unique_2 = hana::make_map(hana::make_pair(hana::integral_constant<int, 0>{}, std::make_unique<int>(0)));
+    BOOST_HANA_RUNTIME_CHECK(map_unique_1 == map_unique_1);
     BOOST_HANA_RUNTIME_CHECK(map_unique_1 != map_unique_2);
 }
