@@ -157,7 +157,7 @@ namespace boost { namespace hana {
     template <>
     struct equal_impl<test::InjectionResult, test::InjectionResult> {
         template <typename X, typename Y>
-        static constexpr auto apply(X x, Y y) {
+        static constexpr auto apply(X const& x, Y const& y) {
             return hana::and_(
                 hana::bool_c<X::injection_id == Y::injection_id>,
                 hana::equal(x.args, y.args)

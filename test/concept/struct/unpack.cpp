@@ -14,6 +14,13 @@
 namespace hana = boost::hana;
 using hana::test::ct_eq;
 
+struct increment_t {
+    template <typename... Xs> void ignore(const Xs &...) const {}
+
+    template <typename... Xs> void operator()(Xs ...xs) const {
+       ignore(++hana::second(xs)...);
+    }
+};
 
 int main() {
     constexpr auto pair = ::minimal_product;
@@ -41,4 +48,8 @@ int main() {
           pair(hana::int_c<1>, ct_eq<1>{}),
           pair(hana::int_c<2>, ct_eq<2>{}))
     ));
+
+    auto modifiable_object = obj(0, 1, 2);
+    hana::unpack(modifiable_object, increment_t{});
+    BOOST_HANA_RUNTIME_ASSERT(hana::equal(modifiable_object, obj(1, 2, 3)));
 }

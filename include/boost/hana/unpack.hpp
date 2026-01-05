@@ -110,18 +110,27 @@ namespace boost { namespace hana {
     // Model for Structs
     //////////////////////////////////////////////////////////////////////////
     namespace struct_detail {
-        // This is equivalent to `demux`, except that `demux` can't forward
-        // the `udt` because it does not know the `g`s are accessors. Hence,
-        // this can result in faster code.
-        struct almost_demux {
-            template <typename F, typename Udt, typename ...Members>
-            constexpr decltype(auto)
-            operator()(F&& f, Udt&& udt, Members&& ...g) const {
-                return static_cast<F&&>(f)(hana::make_pair(
-                    hana::first(static_cast<Members&&>(g)),
-                    hana::second(static_cast<Members&&>(g))
-                                                (static_cast<Udt&&>(udt))
-                )...);
+        template<typename F, typename Udt>
+        struct unpack_helper {
+            F f;
+            Udt udt;
+
+            template<typename ...Members>
+            decltype(auto) operator()(Members &&...g) const {
+                // We specify the pair type explicitly instead of using
+                // make_pair, because we don't want the second type to decay.
+                return static_cast<F&&>(f)(
+                    hana::pair<
+                        std::decay_t<decltype(hana::first(
+                            static_cast<Members&&>(g)))>,
+                        decltype(hana::second(static_cast<Members&&>(g))
+                                                (static_cast<Udt&&>(udt)))
+                    >(
+                        hana::first(static_cast<Members&&>(g)),
+                        hana::second(static_cast<Members&&>(g))
+                                                    (static_cast<Udt&&>(udt))
+                    )...
+                );
             }
         };
     }
@@ -130,10 +139,11 @@ namespace boost { namespace hana {
     struct unpack_impl<S, when<hana::Struct<S>::value>> {
         template <typename Udt, typename F>
         static constexpr decltype(auto) apply(Udt&& udt, F&& f) {
-            return hana::unpack(hana::accessors<S>(),
-                hana::partial(struct_detail::almost_demux{},
-                              static_cast<F&&>(f),
-                              static_cast<Udt&&>(udt)));
+            return hana::unpack(
+                    hana::accessors<S>(),
+                    struct_detail::unpack_helper<F &&, Udt &&> {
+                        static_cast<F &&>(f),
+                        static_cast<Udt &&>(udt)});
         }
     };
 }} // end namespace boost::hana
