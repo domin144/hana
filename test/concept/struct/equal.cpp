@@ -9,6 +9,7 @@
 
 #include "minimal_struct.hpp"
 #include <laws/base.hpp>
+#include <support/constexpr_move_only.hpp>
 namespace hana = boost::hana;
 using hana::test::ct_eq;
 
@@ -44,4 +45,10 @@ int main() {
         obj(ct_eq<99>{}, ct_eq<1>{}),
         obj(ct_eq<0>{}, ct_eq<1>{})
     )));
+
+    auto move_only_0 = obj(ConstexprMoveOnly<0>{});
+    auto move_only_1 = obj(ConstexprMoveOnly<1>{});
+    BOOST_HANA_CONSTANT_ASSERT(hana::equal(move_only_0, move_only_0));
+    BOOST_HANA_CONSTANT_ASSERT(
+        hana::not_(hana::equal(move_only_0, move_only_1)));
 }
