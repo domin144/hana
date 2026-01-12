@@ -80,6 +80,19 @@ namespace boost { namespace hana {
             }
         };
 
+        template <typename T>
+        struct hash_integral_helper<T,
+            typename std::enable_if<std::is_enum<T>::value>::type
+        > {
+            template <typename X>
+            static constexpr auto apply(X const&) {
+                using U = std::underlying_type_t<T>;
+                return hash_integral_helper<U>::apply(
+                    hana::integral_c<U, static_cast<U>(X::value)>
+                );
+            }
+        };
+
         template <>
         struct hash_integral_helper<bool> {
             template <typename X>
